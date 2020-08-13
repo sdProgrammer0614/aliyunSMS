@@ -17,7 +17,7 @@ import java.util.HashMap;
 
 /**
  * @author doubleBeans
- * @since 2020-08-02 21:20
+ * @date 2020-08-13 16:20
  * @version 0.0.1
  */
 @SpringBootTest
@@ -34,6 +34,50 @@ class AliyunSmsDemoApplicationTests {
     private String signName;
     @Value("${queryParameter.templateCode}")
     private String templateCode;
+
+    /**
+     * Create a random verification code of specified length
+     * @param flag true -> [0-9]    false -> [0-9][a-z]
+     * @param length Length of verification code
+     * @return Random verification code
+     */
+    public static String randomAuthCode(boolean flag, int length) {
+
+        // Verification code
+        StringBuilder authCode = new StringBuilder();
+        // Authorized character set
+        String authSet = flag ? "1234567890" : "1234567890abcdefghijklmnopqrstuvwxyz";
+        // Number of authorized characters
+        int len = authSet.length();
+
+        while (length > 0) {
+            // Randomly generate a subscript of an authorized character set
+            // Math.random() -> [0.0, 1.0) double
+            // Math.floor(double a) 向下取整
+            int subscript = (int) Math.floor(Math.random() * len);
+
+            // Verification code keywords
+            char code = authSet.charAt(subscript);
+
+            // verification code += verification code keywords
+            authCode.append(code);
+
+            length--;
+        }
+
+        return authCode.toString();
+    }
+
+    @Test
+    void authTest() {
+        // 6-digit, digital random verification code
+        System.out.println("length: 6, type: digit");
+        System.out.println(randomAuthCode(true, 6));
+
+        // 6 digits, [numbers, alphabets] random verification code
+        System.out.println("length: 6, type: digit、alphabet");
+        System.out.println(randomAuthCode(false, 6));
+    }
 
     @Test
     void contextLoads() {
@@ -58,10 +102,11 @@ class AliyunSmsDemoApplicationTests {
         request.putQueryParameter("SignName", signName);
         request.putQueryParameter("TemplateCode", templateCode);
 
-        // code should be randomly, now is a test
         // TemplateParam: {"code":"1111"}
-        HashMap<String, Object> paramMap = new HashMap<>();
-        paramMap.put("code", 666888);
+        HashMap<String, String> paramMap = new HashMap<>();
+        // auth code
+        String authCode = randomAuthCode(true, 6);
+        paramMap.put("code", authCode);
         request.putQueryParameter("TemplateParam", JSONObject.toJSONString(paramMap));
 
         // deal with exception
